@@ -9,4 +9,7 @@ public class CSI {
         returnToStart.append(cleanUp.repeat(Math.max(0, n - 1)));
         return returnToStart.toString();
     }
+    public static String eraseLine(){
+        return c + "2K";
+    }
 }
