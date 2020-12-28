@@ -24,7 +24,12 @@ public class WeatherApi {
         readKey();
     }
 
-    public void getTemperature() {
+
+    public String getCity() {
+        return city;
+    }
+
+    public double getTemperature() {
         String url = String.format("http://api.openweathermap.org/data/2.5/weather?id=%s&appid=%s&units=metric", this.cityID, this.key);
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder(
@@ -35,11 +40,12 @@ public class WeatherApi {
             HttpResponse response = client.send(request, HttpResponse.BodyHandlers.ofString());
             String body = (String) response.body();
             Parcer weather_info = new Gson().fromJson(body, Parcer.class);
-            System.out.println(weather_info.main.temp);
+            return weather_info.main.temp;
 
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return 0;
     }
 
     private void readKey(){
