@@ -1,4 +1,4 @@
-##Nabu - the Announcer
+## Nabu - the Announcer
 ___
 An desktop app that display information, metrics and notifications. <br>
 It should:
@@ -22,26 +22,26 @@ It might not be:
     </ul>
 </div>
 
-#Getting Started
+# Getting Started
 ___
-####Run city.py script, that will generate the SQLITE3 Nabu.db datebase.<br>
+#### Run city.py script, that will generate the SQLITE3 Nabu.db datebase.<br>
 
 ```shell
 $ sudo apt install sqlite3
 $ python3 scripts/city.py
 ```
 
-###Building
+### Building
 ```shell
 $ ./gradlew jar
 ```
 
-###Running
+### Running
 ```shell
 $ ./gradlew execute
 ```
 
-###Clean Build and Run
+### Clean Build and Run
 ```shell
 $ ./gradlew clean jar execute
 ```
