@@ -1,4 +1,4 @@
-package dev.abrantes.Nabu.metrics;
+package dev.abrantes.Nabu.metrics.CPU;
 
 public class Core {
     private final String coreName;
