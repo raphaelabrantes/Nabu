@@ -1,11 +1,13 @@
-package dev.abrantes.Nabu.metrics;
+package dev.abrantes.Nabu.metrics.CPU;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Scanner;
 
+
 public class CPU {
-    private final String[] command = new String[]{"grep", "cpu", "/proc/stat"};
+    private final String procStat = "/proc/stat";
+    private final File procStateFile = new File(procStat);
     private final String tempPath = "/sys/class/hwmon/hwmon0/temp%d_input";
     private final File tempFileTdie = new File(String.format(tempPath, 1));
     private final File tempFileCTL = new File(String.format(tempPath, 2));
@@ -31,48 +33,49 @@ public class CPU {
 
     public void generateCores(){
         try {
-            Process proc = new ProcessBuilder(command).start();
-            BufferedReader reader =
-                    new BufferedReader(new InputStreamReader(proc.getInputStream()));
-
-            String allCpu = reader.readLine();
+            Scanner readProcStat = new Scanner(procStateFile);
+            String allCpu = readProcStat.nextLine();
+            allCpu = allCpu.replace("  ", " ");
             String line = "";
-            while ((line = reader.readLine()) != null) {
-                Core newCore = createCore(line, false );
+            while ((line = readProcStat.nextLine()) != null  &&  line.contains("cpu")) {
+                Core newCore = createCore(line);
                 cores.add(newCore);
             }
-            reader.close();
-            Core totalCore = createCore(allCpu, true);
+            readProcStat.close();
+            Core totalCore = createCore(allCpu);
             cores.add(totalCore);
 
 
         } catch (IOException e) {
+            System.out.print("Not possible to generate cores");
             e.printStackTrace();
+            System.exit(-240);
         }
     }
 
     private void refreshCores(){
         try {
-            Process proc = new ProcessBuilder(command).start();
-            BufferedReader reader =
-                    new BufferedReader(new InputStreamReader(proc.getInputStream()));
+            Scanner readProcStat = new Scanner(procStateFile);
+            String allCpu = readProcStat.nextLine();
+            updateCore(allCpu.replace("  ", " "), getNCores());
 
-            String allCpu = reader.readLine();
-            updateCore(allCpu, IDLE_INDEX + 1, 2, getNCores());
+            String line = "";
             for(int core = 0; core < getNCores(); core++){
-                updateCore(reader.readLine(), IDLE_INDEX, 1, core);
+                updateCore(readProcStat.nextLine(), core);
             }
 
-            reader.close();
+            readProcStat.close();
         } catch (IOException e) {
+            System.out.println("Not possible to refresh cores");
             e.printStackTrace();
+            System.exit(-240);
         }
     }
 
-    private void updateCore(String line, int idleIndex, int startIndex, int core){
+    private void updateCore(String line, int core){
         String [] coreInfo = line.split(" ");
-        long idle = parser(idleIndex, coreInfo);
-        long total = calculateUsageTotal(startIndex, coreInfo);
+        long idle = parser(IDLE_INDEX, coreInfo);
+        long total = calculateUsageTotal(coreInfo);
         cores.get(core).refresh(total, idle);
     }
 
@@ -84,25 +87,24 @@ public class CPU {
         return cores.size() - 1;
     }
 
-    private Core createCore(String line, boolean isAll){
+    private Core createCore(String line){
         String[] coreInfo = line.split(" ");
-        int plus = isAll ? 1:0;
-        long total = calculateUsageTotal(1+plus, coreInfo);
+        long total = calculateUsageTotal(coreInfo);
         String name = coreInfo[NAME_INDEX];
-        long idle = parser(IDLE_INDEX + plus, coreInfo);
+        long idle = parser(IDLE_INDEX, coreInfo);
         return new Core(name, total, idle);
     }
 
-    private long calculateUsageTotal(int index, String [] coreInfo) {
+    private long calculateUsageTotal(String [] coreInfo) {
         long total = 0;
-        for(int count = 0; count < PROCESSN; count++, index++){
+        for(int index=1; index <= PROCESSN; index++){
             total += parser(index, coreInfo);
         }
         return total;
     }
 
-    private long parser(int index, String[] coreinfo){
-        return Long.parseLong(coreinfo[index]);
+    private long parser(int index, String[] coreInfo){
+        return Long.parseLong(coreInfo[index]);
     }
 
     public ArrayList<Double> getCpuTemps() {
@@ -117,7 +119,9 @@ public class CPU {
             tempScan.close();
 
         } catch (FileNotFoundException e) {
+            System.out.println("Not possible to get CPU temperature");
             e.printStackTrace();
+            System.exit(-240);
         }
         return temp;
 
