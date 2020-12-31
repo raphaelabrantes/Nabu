@@ -71,6 +71,7 @@ public class WeatherApi {
             }
             connection.close();
         } catch (SQLException e) {
+            System.out.println("Failed to get cityID");
             e.printStackTrace();
             System.exit(-10);
         }
