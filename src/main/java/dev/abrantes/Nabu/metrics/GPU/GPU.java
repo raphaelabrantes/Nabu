@@ -15,11 +15,18 @@ public class GPU {
     private final File amdGpuBusy = new File(amdGpuBusyPath);
     private final File amdGpuMem = new File(amdGpuMemPath);
     private final File gpuTemp = new File(gpuTempPath);
+    private  long amdMemoryTotal;
     private final String vendor;
 
 
-    public GPU(String vendor){
+    public GPU(String vendor) throws NotImplementedException{
         this.vendor = vendor;
+        if(vendor.equals("amd")){
+            this.amdMemoryTotal = (long) (Long.parseLong(
+                                readFile(new File("/sys/class/drm/card0/device/mem_info_gtt_total"))) * 1e-6);
+
+        }
+        else throw new NotImplementedException("Intel and Nvidea not yet implemented");
 
     }
 
@@ -30,32 +37,40 @@ public class GPU {
         else throw new NotImplementedException("Intel and Nvidea not yet implemented");
     }
 
+    public String memoryUsageAndTotal(){
+        long memoryUsed = Long.parseLong(readFile(new File("/sys/class/drm/card0/device/mem_info_gtt_used")));
+        memoryUsed *= 1e-6;
+        StringBuilder memory = new StringBuilder("");
+        memory.append(memoryUsed).append("/").append(amdMemoryTotal).append("MB");
+        return memory.toString();
+    }
+
     private int amdUsage(){
+        return Integer.parseInt(readFile(amdGpuBusy));
+    }
+
+    private String readFile(File file){
         try {
-            Scanner amdGpuBusyScan = new Scanner(amdGpuBusy);
-            int usage = Integer.parseInt(amdGpuBusyScan.next());
-            amdGpuBusyScan.close();
-            return usage;
+            Scanner scanner = new Scanner(file);
+            String str = scanner.next();
+            scanner.close();
+            return str;
 
         } catch (FileNotFoundException e) {
-            System.out.println("Not able to open amdGpuBusy");
+            System.out.printf("Not able to open %s", file.getAbsolutePath());
             System.exit(-230);
             e.printStackTrace();
         }
-        return 0;
+        return "";
     }
 
+    public int getAmdMemoryUsage(){
+       return Integer.parseInt(readFile(amdGpuMem));
+    }
+
+
+
     public double getGpuTemp() {
-        try {
-            Scanner gpuTempScan = new Scanner(gpuTemp);
-            double tempTemp = Double.parseDouble(gpuTempScan.next()) / 1000;
-            gpuTempScan.close();
-            return tempTemp;
-        } catch (FileNotFoundException e) {
-            System.out.println("Error opening the gpu Temp File");
-            e.printStackTrace();
-            System.exit(-40);
-        }
-        return 0.0;
+        return Double.parseDouble(readFile(gpuTemp)) / 1000;
     }
 }
