@@ -12,7 +12,7 @@ import java.util.Locale;
 import static jdk.jshell.spi.ExecutionControl.*;
 
 public class Nabu {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws NotImplementedException {
         Locale.setDefault(Locale.US);
         WeatherApi weather = new WeatherApi("Santos");
         CPU cpu = new CPU();
@@ -20,7 +20,7 @@ public class Nabu {
         System.out.printf("Temperature in %s: %.2f°C%s%n%n",
                 weather.getCity(),
                 weather.getTemperature(),
-                "\n".repeat(cpu.getNCores()+4));
+                "\n".repeat(cpu.getNCores()+6));
 
         ArrayList<Core> cores = cpu.getCores();
         ArrayList<Double> cpuTemps = cpu.getCpuTemps();
@@ -28,8 +28,13 @@ public class Nabu {
             try {
                 Thread.sleep(500);
                 cpu.get_metrics();
-                System.out.print(CSI.eraseLineMoveUp(cpu.getNCores() + 5) + CSI.eraseLine());
-                System.out.printf("Temperature GPU %.2f°C%nUsage GPU: %d%s%n", gpu.getGpuTemp(), gpu.getUsage(), "%");
+                System.out.print(CSI.eraseLineMoveUp(cpu.getNCores() + 7) + CSI.eraseLine());
+                System.out.printf("Temperature GPU %.2f°C%nUsage GPU: %d%s%nMemory GPU: %s%n",
+                        gpu.getGpuTemp(),
+                        gpu.getUsage(),
+                        "%",
+                        gpu.memoryUsageAndTotal());
+                System.out.printf("Memory Usage GPU %d%s%n", gpu.getAmdMemoryUsage(), "%");
                 System.out.printf("Temperature Tdie (REAL) of CPU: %.2f°C\nTemperature CTL of CPU: %.2f°C%n",
                         cpuTemps.get(0), cpuTemps.get(1));
                 for (Core core: cores) {
